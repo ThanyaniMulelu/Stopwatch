@@ -1,80 +1,153 @@
-// Get DOM elements for timer display and control buttons
-const timerEL = document.getElementById("timer");
-const startButtonEl = document.getElementById("start");
-const stopButtonEl = document.getElementById("stop");
-const resetButtonEl = document.getElementById("reset");
+// DOM Elements
+const timerEl = document.getElementById("timer");
+const startButton = document.getElementById("start");
+const stopButton = document.getElementById("stop");
+const lapButton = document.getElementById("lap");
+const resetButton = document.getElementById("reset");
+const lapsContainer = document.getElementById("laps");
+const themeToggle = document.getElementById("theme-toggle");
+
+// Audio Elements
+const clickSound = document.getElementById("click-sound");
+const startSound = document.getElementById("start-sound");
+const stopSound = document.getElementById("stop-sound");
 
 // Timer Variables
-let startTime = 0; // Stores the timestamp when timer starts
-let elapsedTime = 0; // Accumulates total elapsed time in milliseconds
-let timerInterval; // Stores the interval ID for the running timer
+let startTime = 0;
+let elapsedTime = 0;
+let timerInterval;
+let lapCount = 1;
+let isRunning = false;
 
-/**
- * Starts the timer by:
- * 1. Calculating the adjusted start time (accounting for any previous elapsed time)
- * 2. Setting up a recurring interval to update the timer display every 10ms
- * 3. Updating button states (disable start, enable stop)
- */
+// Theme Management
+const savedTheme = localStorage.getItem("theme") || "light";
+document.documentElement.setAttribute("data-theme", savedTheme);
+updateThemeIcon();
+
+// Format time as HH:MM:SS.SS
+function formatTime(time) {
+  const date = new Date(time);
+  const hours = date.getUTCHours().toString().padStart(2, "0");
+  const minutes = date.getUTCMinutes().toString().padStart(2, "0");
+  const seconds = date.getUTCSeconds().toString().padStart(2, "0");
+  const milliseconds = Math.floor(date.getUTCMilliseconds() / 10)
+    .toString()
+    .padStart(2, "0");
+
+  return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+}
+
+// Start the timer
 function startTimer() {
-  startTime = Date.now() - elapsedTime;
-  timerInterval = setInterval(() => {
-    elapsedTime = Date.now() - startTime;
-    timerEL.textContent = formatTime(elapsedTime);
-  }, 10);
+  if (!isRunning) {
+    playSound(startSound);
+    startTime = Date.now() - elapsedTime;
+    timerInterval = setInterval(() => {
+      elapsedTime = Date.now() - startTime;
+      timerEl.textContent = formatTime(elapsedTime);
+    }, 10);
 
-  startButtonEl.disabled = true;
-  stopButtonEl.disabled = false;
+    isRunning = true;
+    updateButtonStates();
+  }
 }
 
-/**
- * Formats elapsed time in milliseconds into HH:MM:SS.SS format
- * @param {number} elapsedTime - Time in milliseconds
- * @returns {string} Formatted time string
- *
- */
-function formatTime(elapsedTime) {
-  const milliseconds = Math.floor((elapsedTime % 1000) / 10);
-  const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
-  const minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
-  const hours = Math.floor(elapsedTime / (1000 * 60 * 60));
-  return (
-    (hours ? (hours > 9 ? hours : "0" + hours) : "00") +
-    ":" +
-    (minutes ? (minutes > 9 ? minutes : "0" + minutes) : "00") +
-    ":" +
-    (seconds ? (seconds > 9 ? seconds : "0" + seconds) : "00") +
-    "." +
-    (milliseconds > 9 ? milliseconds : "0" + milliseconds)
-  );
-}
-
-/**
- * Stops the timer by:
- * 1. Clearing the update interval
- * 2. Updating button states (enable start, disable stop)
- */
+// Stop the timer
 function stopTimer() {
-  clearInterval(timerInterval);
-  startButtonEl.disabled = false;
-  stopButtonEl.disabled = true;
+  if (isRunning) {
+    playSound(stopSound);
+    clearInterval(timerInterval);
+    isRunning = false;
+    updateButtonStates();
+  }
 }
 
-/**
- * Resets the timer by:
- * 1. Clearing the interval (if running)
- * 2. Resetting elapsed time to 0
- * 3. Resetting the display to 00:00:00
- * 4. Resetting button states to initial condition
- */
+// Reset the timer
 function resetTimer() {
-  clearInterval(timerInterval);
+  playSound(clickSound);
+  stopTimer();
   elapsedTime = 0;
-  timerEL.textContent = "00:00:00";
-
-  startButtonEl.disabled = false;
-  stopButtonEl.disabled = true;
+  timerEl.textContent = "00:00:00.00";
+  lapCount = 1;
+  lapsContainer.innerHTML = "";
+  updateButtonStates();
 }
-// Add event listeners to control buttons
-startButtonEl.addEventListener("click", startTimer);
-stopButtonEl.addEventListener("click", stopTimer);
-resetButtonEl.addEventListener("click", resetTimer);
+
+// Record a lap time
+function recordLap() {
+  if (isRunning) {
+    playSound(clickSound);
+    const lapTime = elapsedTime;
+    const lapItem = document.createElement("div");
+    lapItem.className = "lap-item";
+    lapItem.innerHTML = `
+            <span class="lap-number">Lap ${lapCount}</span>
+            <span class="lap-time">${formatTime(lapTime)}</span>
+        `;
+
+    // Insert new lap at the top
+    if (lapsContainer.firstChild) {
+      lapsContainer.insertBefore(lapItem, lapsContainer.firstChild);
+    } else {
+      lapsContainer.appendChild(lapItem);
+    }
+
+    lapCount++;
+  }
+}
+
+// Update button states based on timer state
+function updateButtonStates() {
+  startButton.disabled = isRunning;
+  stopButton.disabled = !isRunning;
+  lapButton.disabled = !isRunning;
+}
+
+// Play sound effect
+function playSound(sound) {
+  sound.currentTime = 0;
+  sound.play().catch((e) => console.log("Sound playback prevented:", e));
+}
+
+// Toggle between dark and light theme
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute("data-theme");
+  const newTheme = currentTheme === "light" ? "dark" : "light";
+
+  document.documentElement.setAttribute("data-theme", newTheme);
+  localStorage.setItem("theme", newTheme);
+  updateThemeIcon();
+  playSound(clickSound);
+}
+
+// Update theme toggle icon
+function updateThemeIcon() {
+  const currentTheme = document.documentElement.getAttribute("data-theme");
+  const icon = themeToggle.querySelector("i");
+
+  if (currentTheme === "dark") {
+    icon.className = "fas fa-sun";
+  } else {
+    icon.className = "fas fa-moon";
+  }
+}
+
+// Event Listeners
+startButton.addEventListener("click", startTimer);
+stopButton.addEventListener("click", stopTimer);
+lapButton.addEventListener("click", recordLap);
+resetButton.addEventListener("click", resetTimer);
+themeToggle.addEventListener("click", toggleTheme);
+
+// Keyboard shortcuts
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    e.preventDefault();
+    if (isRunning) stopTimer();
+    else startTimer();
+  } else if (e.code === "KeyL") {
+    recordLap();
+  } else if (e.code === "KeyR") {
+    resetTimer();
+  }
+});

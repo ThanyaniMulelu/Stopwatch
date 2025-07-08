@@ -3,16 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StopWatch_By_Thanyani_Mulelu</title>
+    <title>Precision Stopwatch | Thanyani_Mulelu</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-   <div id="timer">00:00:00</div> 
-   <div id="buttons">
-    <button id="start">Start</button>
-    <button id="stop">Stop</button>
-    <button id="reset">Reset</button>
-   </div>
-   <script src="index.js"></script>
+    <div class="container">
+        <div class="stopwatch">
+            <div class="header">
+                <h1>Precision Stopwatch</h1>
+                <button id="theme-toggle" aria-label="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+            
+            <div id="timer">00:00:00.00</div>
+            
+            <div class="controls">
+                <button id="start" class="btn">
+                    <i class="fas fa-play"></i> Start
+                </button>
+                <button id="stop" class="btn" disabled>
+                    <i class="fas fa-pause"></i> Stop
+                </button>
+                <button id="lap" class="btn">
+                    <i class="fas fa-flag"></i> Lap
+                </button>
+                <button id="reset" class="btn">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+            
+            <div class="laps-container">
+                <h2>Lap Times</h2>
+                <div id="laps"></div>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="click-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-modern-click-box-check-1120.mp3"></audio>
+    <audio id="start-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3"></audio>
+    <audio id="stop-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3"></audio>
+    
+    <script src="index.js"></script>
 </body>
 </html>
